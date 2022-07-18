@@ -1,5 +1,5 @@
 \overfullrule=0pt
-\chapter{Deep Learning in Neural Encoding Prediction}
+\chapter{Deep Learning in Neural Response Prediction}
 
 This section comprises an essential background in machine learning and deep learning techniques used in neuroscience, in particular in neural response prediction. We introduce regression, deep neural networks (DNNs), convolutional neural networks (CNNs) and rotation-equivariant CNNs. To broaden the knowledge of machine learning or deep learning, we refer to two excellent books: Pattern Recognition and Machine Learning \citep{bishop2006pattern} and Deep Learning \citep{Goodfellow-et-al-2016}.
 
@@ -8,24 +8,43 @@ This section comprises an essential background in machine learning and deep lear
 Regression is a supervised machine learning problem that is also often encountered in neuroscience, for example, in predicting a neural response given data input. Firstly, let us define what regression is.
 
 \begin{defn}[Training dataset]\label{def01:1}
-	Let $P_{data}(Y|X)$ be a data generating distribution where $Y$ is a random variable and $X = (X^{(1)}, … , X^{(d)})$ a multivariate random variable. Let $D = {(\textbf{x}_1, y_1), \dots, (\textbf{x}_n, y_n)}$ be an independently drawn sample of size $n$ from $P_{data}$. We then refer to $D$ as the training dataset. Let us also denote the empirical data distribution described by $D$ by $\hat{p}_{data}$.
-\end{defn}
-
-\begin{defn}[Loss function]\label{def01:2}
-Given a function $f: \mathbb{R}^d \to \mathbb{R}$, the loss function is a function $L: (D \times f) \to R$ which is used to assess the quality of the function $f$ given the training dataset $D$.
+	Let $P_{data}(Y, X)$ be a data generating distribution where $Y$ is a random variable and $X = (X^{(1)}, … , X^{(d)})$ a multivariate random variable. Let $D = {(\textbf{x}_1, y_1), \dots, (\textbf{x}_n, y_n)}$ be an independently drawn sample of size $n$ from $P_{data}$. We then refer to $D$ as the training dataset. Let us also denote the empirical data distribution described by $D$ by $\hat{P}_{data}$.
 \end{defn}
 
 \begin{defn}[Regression]\label{def01:3}
-Given a training dataset $D$, regression is a task of finding a function $f: \mathbb{R}^d \to \mathbb{R}$ that predicts $y \in \mathbb{R}$ given $\textbf{x} \in \mathbb{R}^d$ from $P_{data}(Y|X)$. This problem is solved by minimizing the loss function $L: (D \times f) \to \mathbb{R}$, whose purpose is to assess the quality of the prediction of $y$ from the data generating distribution by function $f$ given the training dataset $D$. The regression task is, therefore, to find $f$ such that $f = \argmin_{f} L(D, f)$. 
+Given a training dataset $D$, regression is a task of finding a function $f: \mathbb{R}^d \to \mathbb{R}$ that, given $\textbf{x} \in \mathbb{R}^d$, minimizes error between $\hat{y} = f(\textbf{x})$ and $y$, where $(\textbf{x}, y) \sim P_{data}$.
+%that predicts $y \in \mathbb{R}$ as accurately as possible given $\textbf{x} \in \mathbb{R}^d$, where $(\textbf{x}, y) \sim P_{data}$.
+
 \end{defn}
 
-Notice that even though a sample of only size $n$ is available, the task of regression is to predict $y \in \mathbb{R}$ given $\textbf{x} \in \mathbb{R}^d$ sampled from $P_{data}(Y|X)$, which is the original data distribution. To obtain $f$ modeling $P(Y|X)$ as accurately as possible, the size of the training dataset is, therefore, critical.
+\begin{defn}[Loss function]\label{def01:2}
+	Given a function $f: \mathbb{R}^d \to \mathbb{R}$, the loss function, or sometimes called cost function, is a function $L: (D \times f) \to \mathbb{R}$ estimating performance of the function $f$ in predicting $y$ given $\textbf{x}$, where $(\textbf{x}, y) \sim P_{data}(Y, X)$.
+\end{defn}
+
+A typical loss function for regression is Mean Squared Error (MSE). It is used not only because of its simple definition, but also because it is, in some sense, "statistically justified". More on this in Section~\ref{appropriate-loss}.
+
+\begin{defn}[Mean Squared Error (MSE)]\label{def01:5}
+	Mean squared error loss function is defined as:
+	\begin{equation}
+	L(D, f) = \frac{1}{n} \sum_{i=1}^n (f(\textbf{x}_i) - y_i)^2,
+	\end{equation}
+	where $(\textbf{x}_i, y_i) \in D$ for $1 \leq i \leq n$.
+\end{defn}
 
 \begin{defn}[Hypothesis and Hypotheses space]\label{def01:4}
-The function $f \in F$ is commonly called a hypothesis and $F$ a hypothesis space from which we search for the best hypothesis (for example, all linear functions, all polynomials, etc.). In our case, the hypothesis space is described by variables called weights (or parameters), which we will denote by $w$. Finding $f \in F$ is then equivalent to finding the proper weights. We will, therefore, often write $f(w)$ instead of $f$ to emphasize that $f$ is parametrized by $w$. Moreover, we will write $L(D, w)$ instead of $L(D, f)$ since $f$ is fully determined by $w$.
+	The function $f \in F$ is commonly called a hypothesis and $F$ a hypothesis space from which we search for the best hypothesis (for example, all linear functions, all polynomials, etc.). 
 \end{defn}
 
-It is often beneficial to think of random variable $Y$ in a sample $(X, Y) \sim P_{data}$ as a sum of two random variables: $Y = Y_{explainable} + Y_{noise}$. Random variable $Y_{explainable}$ is generated by a distribution that can be fully explained by some mathematical function $g(X, w)$. Assuming regression with a commonly used MSE loss function (defined below in definition~\ref{def01:5}), optimal $g$ is $g(X, w) = \mathbb{E}_{Y|X}[Y]$, where $(X, Y) \sim P_{data}$. On the other hand, the random variable $Y_{noise}$ is independent of $X$ and generated by a noise-generating distribution. 
+In our case, the hypothesis space is described by variables called weights (or parameters), which we will denote by $w$. Finding $f \in F$ is then equivalent to finding the proper weights. We will, therefore, often write $f(w)$ instead of $f$ to emphasize that $f$ is parametrized by $w$. Moreover, we will write $L(D, w)$ instead of $L(D, f)$ since $f$ is fully determined by $w$.
+
+Regression can be solved by minimizing some appropriate loss function $L$. The regression task is, therefore, to find $f$ such that $f = \argmin_{g \in F} L(D, g)$. 
+
+Notice that even though we train the model using only the empirical data distribution $\hat{P}_{data}$ described by $D$, the task of regression is to predict $y \in \mathbb{R}$ given $\textbf{x} \in \mathbb{R}^d$ sampled from the original data generating distribution $P_{data}$. To obtain a hypothesis $f$ predicting $y$ as accurately as possible, the size of the training dataset is, therefore, critical. The larger the training dataset $D$ is, the closer the distribution $\hat{P}_{data}$ can get to $P_{data}$, and, consequently, the model has a potential to make better predictions.
+
+\subsection{Irreducible error and intrinsic noise}
+
+
+It is often beneficial to think of random variable $Y$ in a sample $(X, Y) \sim P_{data}$ as a sum of two random variables: $Y = Y_{reducible} + Y_{noise}$. Random variable $Y_{reducible}$ is generated by a distribution that can be fully explained by some mathematical function $g(X)$. Assuming regression with MSE loss function, the optimal hypothesis $g$ is $g(X) = \mathbb{E}_{Y|X}[Y]$, where $(X, Y) \sim P_{data}$. On the other hand, the random variable $Y_{noise}$ is independent of $X$ and generated by a noise generating distribution. 
 
 This consequently leads to decomposition of the model’s loss into two summands \citep{bishop2006pattern}:
 \begin{equation}
@@ -34,29 +53,22 @@ This consequently leads to decomposition of the model’s loss into two summands
 \mathbb{E}_{X, Y}[(g(X) - Y)^2]
 \end{equation}
 
-Our model minimizes the first term, while the second term is defined by noise which the model cannot change. For this reason, literature refers to this as an irreducible error, giving the lower bound of the overall loss. Note that if we did not use MSE as a loss function, $Y_{explainable}$ would be still possible to fully explain by some $g(X, w)$, but it would not necessarily be equal to $\mathbb{E}_{Y|X}[Y]$.
+Our model minimizes the first term, while the second term is defined by noise which the model cannot predict. For this reason, literature refers to this as an \emph{irreducible error}, giving the lower bound of the overall loss. Note that if we did not use MSE as a loss function, $Y_{reducible}$ would be still possible to fully explain by some $g(X)$, but it would not necessarily be equal to $\mathbb{E}_{Y|X}[Y]$.
 
 The noise can be caused by the measuring device, or more importantly, in our case, it can depend on some hidden features not provided in our dataset. The machine learning model can never predict the noise distribution. This is not caused by a poor choice of a model but by the lack of information on which the variable $Y$ is dependent.
 
-In regression, it is often assumed that $Y_{noise}$ is generated by Gaussian distribution. Moreover, the normal distribution is a distribution with the highest entropy (between all distributions having fixed mean and variance), meaning it is the most general distribution with these properties. If we used maximum likelihood estimation to estimate the parameters $w$, we would arrive at a frequently used loss function in machine learning; mean squared error.
+\subsection{Choosing an appropriate loss function for neural response prediction}\label{appropriate-loss}
 
+When deciding what loss function is appropriate for training of our model, the distribution of random variable $Y_{noise}$ is of high importance as it determines the loss function. In regression, it is often assumed that $Y_{noise}$ is generated by Gaussian distribution. Among other reasons, this decision is made mostly based on the fact that between all distributions on real numbers with mean $\mu$ and variance $\sigma^2$, the Gaussian distribution $N(\mu, \sigma^2)$ is a distribution with the highest entropy. Therefore, if we have no information about $Y_{noise}$, according to the principle of maximum entropy, normally distributed $Y_{noise}$ is the best choice as it minimizes the amount of information built into the distribution. Interestingly, it can be shown that the approach of maximum likelihood estimation for $Y_{noise} \sim N(\mu, \sigma^2)$ is equivalent to minimizing mean squared error. This argument justifies the use of mean square error as a loss function for regression.
 
-\begin{defn}[Mean Squared Error (MSE)]\label{def01:5}
-	Mean squared error loss function is defined as:
-	\begin{equation}
-	L(D, w) = \frac{1}{n} \sum_{i=1}^n (f(\textbf{x}_i) - y_i)^2,
-	\end{equation}
-	where $(\textbf{x}_i, y_i) \in D$ for $1 \leq i \leq n$.
-\end{defn}
-
-However, in the prediction of neural responses, the normal distribution is not appropriate mainly due to the following two reasons:
+However, when predicting neural responses, normal distribution is not appropriate mainly due to the following two reasons:
 \begin{enumerate}
-	\item Neuron’s response is assumed to be non-negative as it correlates with its firing rate. Thus we do not need to use the most general distribution. Gaussian distribution is unsuitable for this task since it can generate negative numbers.
-	\item Variance of neuron’s response correlates with its firing rate \citep{goris2014partitioning}, meaning that the random variable $Y_{noise}$ is dependent on the absolute value of $Y_{explainable}$. Using a distribution whose variance increases linearly with the mean would be beneficial.
+	\item Neuron’s response is assumed to be non-negative as it correlates with its firing rate. As Gaussian distribution can generate negative values, it is an inappropriate distribution of $Y_{noise}$.
+	\item Variance of neuron’s response correlates with its firing rate \citep{goris2014partitioning}, meaning that the random variable $Y_{noise}$ is dependent on the absolute value of $Y_{reducible}$. Using a distribution whose variance increases linearly with the mean would be beneficial.
 \end{enumerate}
 
 
-These two reasons make Poisson distribution more appropriate in neural response prediction. Therefore, the Poisson loss, obtained from maximum likelihood estimation, is often used \citep{cadena2019deep}, \citep{klindt2017neural}, \citep{sinz2018stimulus}, \citep{lurz2021generalization}:
+These two observations provide additional information about the noise generating distribution, therefore, distribution of lower entropy can be used. The above arguments make Poisson distribution more appropriate for neural response prediction than the Gaussian distribution. Therefore, the Poisson loss, obtained from maximum likelihood estimation, is usually used as the minimized loss function \citep{cadena2019deep}, \citep{klindt2017neural}, \citep{sinz2018stimulus}, \citep{lurz2021generalization}:
 
 \begin{defn}[Poisson loss]\label{def01:6}
 	\begin{equation}
@@ -182,7 +194,7 @@ Intuitively, the model’s parameters are updated in a direction that should min
 
 The crucial part is the computation of
 \begin{equation}
-	\nabla_w L(D, w) = \mathbb{E}_{(\textbf{x}, y) \sim \hat{p}_{data}} [ \nabla_w L((\textbf{x}, y), w) ].
+	\nabla_w L(D, w) = \mathbb{E}_{(\textbf{x}, y) \sim \hat{P}_{data}} [ \nabla_w L((\textbf{x}, y), w) ].
 \end{equation}
 
 Although the gradient can be computed directly using the whole training dataset, this is not usually done due to the large data volume. A popular stochastic gradient descent algorithm (SGD) \citep{kiefer1952stochastic} randomly selects a subsample of the training dataset called a batch; let us denote it $B$ of $m$ samples. Then it estimates the gradient as follows:
@@ -284,7 +296,7 @@ In comparison to Poisson loss, Pearson’s correlation coefficient is a number f
 
 In the chapter introducing the early visual system, we described the connections between V1 and other brain regions. The primary visual cortex is not solely dependent on the visual input. A substantial portion of input information comes from different brain areas. This is one of the reasons why neurons exhibit a significant response variability given the same visual stimulus.
 
-We can consider this variability which cannot be explained merely by input features, in our case visual input, as a noise generated by unknown noise-generating distribution. This distribution is responsible for the irreducible error defined in the Section~\ref{section:regression} about regression. We have laid a strong emphasis on this topic since, compared to datasets that the reader might have encountered in machine learning, the influence of noise is much more significant in neuroscientific datasets. Moreover, it is crucial to remember that different datasets contain different irreducible errors. Although independent of the scale of neural responses, correlation is not ideal as an evaluation metric as one model can achieve different correlations on distinct datasets.
+We can consider this variability which cannot be explained merely by input features, in our case visual input, as a noise generated by unknown noise generating distribution. This distribution is responsible for the irreducible error defined in the Section~\ref{section:regression} about regression. We have laid a strong emphasis on this topic since, compared to datasets that the reader might have encountered in machine learning, the influence of noise is much more significant in neuroscientific datasets. Moreover, it is crucial to remember that different datasets contain different irreducible errors. Although independent of the scale of neural responses, correlation is not ideal as an evaluation metric as one model can achieve different correlations on distinct datasets.
 
 To take into account the variability neurons exhibit, Walker et al. \citep{walker2019inception} have developed a metric called oracle correlation and fraction of oracle. For this purpose, the test set contains multiple trials with the same input image, enabling us to observe how the neural response varies. Firstly, we compute an oracle, an estimate of a maximal achievable correlation per neuron. It is done by computing the correlation of the leave-one-out mean and the remaining response from the repeated inputs. We then average the correlation over all neurons.
 
