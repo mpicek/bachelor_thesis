@@ -68,11 +68,11 @@ However, when predicting neural responses, normal distribution is not appropriat
 \end{enumerate}
 
 
-These two observations provide additional information about the noise generating distribution, therefore, distribution of lower entropy can be used. The above arguments make Poisson distribution more appropriate for neural response prediction than the Gaussian distribution. Therefore, the Poisson loss, obtained from maximum likelihood estimation, is usually used as the minimized loss function \citep{cadena2019deep}, \citep{klindt2017neural}, \citep{sinz2018stimulus}, \citep{lurz2021generalization}:
+These two observations provide additional information about the noise generating distribution, and, thus, a distribution of lower entropy can be used. A distribution consistent with the mentioned assumptions is the Poisson distribution. It is, therefore, usually used as a distribution of $Y_{noise}$ of neural activity data. Analogically to the Gaussian distribution, using maximum likelihood estimation leads to Poisson loss, a loss function commonly used for neural population encoding prediction \citep{cadena2019deep}, \citep{klindt2017neural}, \citep{sinz2018stimulus}, \citep{lurz2021generalization}:
 
 \begin{defn}[Poisson loss]\label{def01:6}
 	\begin{equation}
-		L_{Poiss}(D, w) = \frac{1}{m} \sum_{i=1}^m (f(\textbf{x}_i) - y_i log(f(\textbf{x}_i)),
+		L_{Poiss}(D, f) = \frac{1}{m} \sum_{i=1}^m (f(\textbf{x}_i) - y_i log(f(\textbf{x}_i)),
 	\end{equation}
 	where $(\textbf{x}_i, y_i) \in D$ for $1 \leq i \leq n$ and $m$ stands for the number of neurons.
 \end{defn}
