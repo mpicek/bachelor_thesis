@@ -39,7 +39,7 @@ In our case, the hypothesis space is described by variables called weights (or p
 
 Regression can be solved by minimizing some appropriate loss function $L$. The regression task is, therefore, to find $f$ such that $f = \argmin_{g \in F} L(D, g)$. 
 
-Notice that even though we train the model using only the empirical data distribution $\hat{P}_{data}$ described by $D$, the task of regression is to predict $y \in \mathbb{R}$ given $\textbf{x} \in \mathbb{R}^d$ sampled from the original data generating distribution $P_{data}$. To obtain a hypothesis $f$ predicting $y$ as accurately as possible, the size of the training dataset is, therefore, critical. The larger the training dataset $D$ is, the closer the distribution $\hat{P}_{data}$ can get to $P_{data}$, and, consequently, the model has a potential to make better predictions.
+Notice that even though we train the model using only the empirical data distribution $\hat{P}_{data}$ described by $D$, the task of regression is to predict $y \in \mathbb{R}$ given $\textbf{x} \in \mathbb{R}^d$ sampled from the original data generating distribution $P_{data}$. To obtain a hypothesis $f$ predicting $y$ as accurately as possible, the size of the training dataset is, therefore, critical.
 
 \subsection{Irreducible error and intrinsic noise}
 
@@ -72,9 +72,9 @@ These two observations provide additional information about the noise generating
 
 \begin{defn}[Poisson loss]\label{def01:6}
 	\begin{equation}
-		L_{Poiss}(D, f) = \frac{1}{m} \sum_{i=1}^m (f(\textbf{x}_i) - y_i log(f(\textbf{x}_i)),
+		L_{Poiss}(D, f) = \frac{1}{n} \sum_{i=1}^n (f(\textbf{x}_i) - y_i log(f(\textbf{x}_i)),
 	\end{equation}
-	where $(\textbf{x}_i, y_i) \in D$ for $1 \leq i \leq n$ and $m$ stands for the number of neurons.
+	where $(\textbf{x}_i, y_i) \in D$ for $1 \leq i \leq n$.
 \end{defn}
 
 
@@ -141,11 +141,11 @@ Common activation functions used in artificial neural networks are the following
 
 
 \begin{enumerate}
-	\item \textbf{Sigmoid}: The most basic activation function is the sigmoid function. Its application is common in binary classification as the sigmoid returns values between 0 and 1, which can be interpreted as probability of a certain class. It is, however, not used in hidden layers of deep neural networks as multiple sequentially stacked sigmoid functions cause an infamous \emph{vanishing gradient problem}, preventing the DNNs from learning effectively \citep{Goodfellow-et-al-2016}:
+	\item \textbf{Sigmoid}: The first activation function we mention is the sigmoid function. Its application is common in binary classification as the sigmoid returns values between 0 and 1, which can be interpreted as probability of a certain class. It is, however, not used in hidden layers of deep neural networks as multiple sequentially stacked sigmoid functions cause an infamous \emph{vanishing gradient problem}, preventing the DNNs from learning effectively \citep{Goodfellow-et-al-2016}:
 	\begin{equation}
 		\sigma (x) = \frac{1}{1 - e^{-x}}
 	\end{equation}
-	\item \textbf{Tanh}: Another popular activation function tanh is based on sigmoid:
+	\item \textbf{Hyperbolic tangent (tanh)}: Another popular activation function tanh, a $\tan$ function on a circle. Hyperbolic tangent can be defined using sigmoid function:
 	\begin{equation}
 		\tanh (x) = 2 \sigma(2x) - 1
 	\end{equation}
@@ -153,7 +153,7 @@ Common activation functions used in artificial neural networks are the following
 	\begin{equation}
 	\text{ReLU} (x) = \max(0, x)
 	\end{equation}
-	\item \textbf{Exponential Linear Unit (ELU)}: When $x \geq 0$, ELU acts as an identity. However, compared to ReLU, ELU can return negative values. ELU is known to perform well and improve DNN training. \citep{clevert2015fast}:
+	\item \textbf{Exponential Linear Unit (ELU)}: When $x \geq 0$, ELU acts as an identity, and, compared to ReLU, ELU can return negative values. The main difference between ELU and ReLU is, however, that ELU is a smooth function. Exponential Linear Unit is known to perform well and improve DNN training. \citep{clevert2015fast}:
 	\begin{equation}
 	\text{ELU} (x) = \left\{\begin{array}{lr}
 	\alpha (\exp(x) - 1), & \text{for } x \leq 0 \\
@@ -173,7 +173,7 @@ Common activation functions used in artificial neural networks are the following
 
 \section{Training of the DNNs}
 
-The objective of the DNN training is to find weights that minimize a chosen loss function $L(D, w)$. Due to the vast number of parameters, an enormous volume of data, and the nonlinear nature of DNNs, direct analytical solutions are not feasible. Instead, neural networks utilize gradient-based methods.
+The objective of the DNN training is to find weights that minimize a chosen loss function $L(D, w)$. Due to the vast number of parameters, the volume of data, and the nonlinear nature of DNNs, direct analytical solutions are not feasible. Instead, neural networks utilize gradient-based methods.
 
 Very simply put, gradient methods minimize an objective function iteratively. Let $L(D, w)$ be a loss function that we wish to minimize. The basic gradient-based algorithm looks similar to this pseudocode:
 
@@ -188,19 +188,25 @@ Very simply put, gradient methods minimize an objective function iteratively. Le
 \end{algorithmic}
 \end{algorithm}
 
-As regards the weight initialization in the gradient-based algorithm (Algorithm~\ref{alg:grad}), more sophisticated initialization techniques yielding better results also exist \citep{glorot2010understanding}.
+Being the optimization task in the vast majority of cases non-convex, it can depend on the starting point, i.e. how the trainable weights are initialized. It has been empirically proven that, depending on the task, certain initialization schemes can improve training and result in better models \citep{glorot2010understanding}.
 
-Intuitively, the model’s parameters are updated in a direction that should minimize the loss. How large steps we perform depends on the $\alpha$ hyperparameter called the learning rate, which can even change in every iteration (it usually decreases).
+Intuitively, the model’s parameters are updated in a direction that should minimize the loss. How large steps we perform depends on the $\alpha$ hyperparameter called the \emph{learning rate} \footnote{Learning rate does not have to stay the same throughout the whole training. Algorithms often change $\alpha$ to adapt to the situation the algorithm is in. Nonetheless, gradient-based algorithms usually decrease the learning rate as the model's accuracy increases and more subtle weight updates are required.}.
 
-The crucial part is the computation of
+The crucial part is the computation of $\nabla_w L(D, w)$. As we have $n$ data points in our training dataset $D$, we compute the gradient as follows:
+
 \begin{equation}
-	\nabla_w L(D, w) = \mathbb{E}_{(\textbf{x}, y) \sim \hat{P}_{data}} [ \nabla_w L((\textbf{x}, y), w) ].
+\begin{aligned}
+\nabla_w L(D, w) & = \nabla_w \frac{1}{n} \sum_{i=1}^n L((\textbf{x}_i, y_i), w)\\
+ & = \nabla_w \sum_{i=1}^n \hat{P}_{data}(\textbf{x}_i, y_i) L((\textbf{x}_i, y_i), w)\\
+ & = \sum_{i=1}^n \hat{P}_{data}(\textbf{x}_i, y_i) \nabla_w L((\textbf{x}_i, y_i), w)\\
+ & = \mathbb{E}_{(\textbf{x}, y) \sim \hat{P}_{data}} [ \nabla_w L((\textbf{x}, y), w) ]
+\end{aligned}
 \end{equation}
 
 Although the gradient can be computed directly using the whole training dataset, this is not usually done due to the large data volume. A popular stochastic gradient descent algorithm (SGD) \citep{kiefer1952stochastic} randomly selects a subsample of the training dataset called a batch; let us denote it $B$ of $m$ samples. Then it estimates the gradient as follows:
 
 \begin{equation}
-	\hat{\nabla}_w L(D, w) = \frac{1}{m} \sum_{i=1}^m \nabla_w L((\textbf{x}, y), w).
+	\hat{\nabla}_w L(D, w) = \frac{1}{m} \sum_{i=1}^m \nabla_w L((\textbf{x}_i, y_i), w).
 \end{equation}
  
 
@@ -274,7 +280,7 @@ Obviously, only four orientations of a square filter are achievable without inte
 
 \section{Evaluation metrics}
 
-Although Poisson loss function is suitable for training of a machine learning model, it is not an ideal evaluation metric, as it depends on the scale and shift of the neural responses \citep{willeke2022sensorium}. This might complicate the comparison of models trained on different datasets.
+Although Poisson loss is suitable for the DNN training, as it depends on the scale and shift of the neural responses, it is not an ideal evaluation metric \citep{willeke2022sensorium}. This might complicate the comparison of the final models trained on different datasets. Moreover, being the Poisson loss not bounded, this measure is not well interpretable.
 
 \subsection{Averaged Pearson’s correlation}
 
@@ -291,27 +297,6 @@ Instead, we will measure Pearson’s correlation coefficient per neuron between 
 
 
 In comparison to Poisson loss, Pearson’s correlation coefficient is a number from interval $[-1, 1]$, making this metric easier to interpret and thus more appropriate as an evaluation metric.
-
-\subsection{Oracle Correlation and Fraction of Oracle}
-
-In the chapter introducing the early visual system, we described the connections between V1 and other brain regions. The primary visual cortex is not solely dependent on the visual input. A substantial portion of input information comes from different brain areas. This is one of the reasons why neurons exhibit a significant response variability given the same visual stimulus.
-
-We can consider this variability which cannot be explained merely by input features, in our case visual input, as a noise generated by unknown noise generating distribution. This distribution is responsible for the irreducible error defined in the Section~\ref{section:regression} about regression. We have laid a strong emphasis on this topic since, compared to datasets that the reader might have encountered in machine learning, the influence of noise is much more significant in neuroscientific datasets. Moreover, it is crucial to remember that different datasets contain different irreducible errors. Although independent of the scale of neural responses, correlation is not ideal as an evaluation metric as one model can achieve different correlations on distinct datasets.
-
-To take into account the variability neurons exhibit, Walker et al. \citep{walker2019inception} have developed a metric called oracle correlation and fraction of oracle. For this purpose, the test set contains multiple trials with the same input image, enabling us to observe how the neural response varies. Firstly, we compute an oracle, an estimate of a maximal achievable correlation per neuron. It is done by computing the correlation of the leave-one-out mean and the remaining response from the repeated inputs. We then average the correlation over all neurons.
-
-Finally, the fraction of oracle achieved by the model is estimated as a slope of a linear function without offset fitted on oracle correlation to the model's test set correlation across all neurons.
-
-This technique guarantees a better performance estimation given a dataset where noise significantly influences the target values. It can also be used to compare models trained on different datasets, as it is independent of the intrinsic noise. However, there are drawbacks, too. Firstly, it is necessary for the test set to consist of repeated trials. Secondly, the performance estimation is influenced by the number of repeats. If the number of repeats is low, the estimate of oracle fraction performance can return a value higher than 1.
-
-
-\section{Ensemble learning}
-
-Ensemble learning is a machine learning technique based on the idea that a combination of multiple different hypotheses might lead to a hypothesis with a better predictive performance. This approach is usually utilized when the hypotheses are very different. However, deep learning ensemble models containing the same model architecture with different random weight initialization often achieve higher performance than just one standalone model of the same type \citep{fort2019deep}.
-
-Although the rules for combining the models can be complex, even fairly simple rules can be effective. In the regression task, an average of each model’s prediction is often used as the prediction of the whole ensemble model.
-
-
 
 
 

@@ -1,0 +1,27 @@
+\chapter{Related Work}
+
+Prediction of neural responses is a problem of many variants and parameters. We can predict neural responses in different species, different parts of the brain, different types of cells, and with different goals. The dataset concerning the V1 neural population can consist of artificial images, natural images, or videos. Most of the time, however, the responses of the primary visual cortex are predicted for static natural images. There is no benchmark to compare our model with yet, although efforts have been established recently \citep{willeke2022sensorium}.
+
+This chapter provides a short overview of work related to our task. Although the following publications often have different objectives than we do, they provide valuable contributions that we will take advantage of.
+
+\section{Prediction of Neural Responses in the Primary Visual Cortex}
+
+In the task of neural response prediction, performing an input preprocessing shared by all neurons is beneficial because neurons do not need to learn the preprocessing repeatedly, reducing the number of parameters and computational time. Antolík et al. \citep{antolik2016model} were the first to notice and exploit this idea. Klindt et al. \citep{klindt2017neural} followed by organizing the layers of their deep neural network into two separate groups; convolutional neural network (called core in this context) and readout. Core's purpose is to generalize the computation of all neurons, disregarding their position and type.
+
+On the other hand, the readout is designed to read preprocessed features from the core and translate them into a response of a particular neuron. Its objective is to capture only the specific properties that differ between individual neurons. In the mentioned publication, the proposed factorized readout learned for each neuron a single spatial filter of the size of the CNN’s feature map’s height and width. At the same time, for each neuron, the readout assigned weights to channels from the precomputed CNN features, describing the importance of each channel for a particular neuron. Regularization was imposed on all the mentioned readout parameters, causing the neuron representation to be sparse and smooth. Consequently, regularization forced the readout to predict the response only using features from a confined area of the feature map and a limited number of channels. This can be roughly interpreted as the neuron’s position of the receptive field and its type.
+
+Many papers published took into account only data from mice and not primates. Building on Klindt's work, Cadena and his colleagues decided to probe how well the spiking activity can be predicted in V1 of monkeys in response to natural images \citep{cadena2019deep}.
+
+In our work, we will use a dataset from Lurz and his colleagues \citep{lurz2021generalization}, where they predicted neural responses in the primary visual cortex of mice. Their goal was to investigate how well CNN core generalizes neural computation between different animals. The results were promising; indeed, the core can be used to predict neural responses in other animals, for which a lower amount of data is available. However, the primary contribution related to our work was a novel readout architecture.
+
+For the $i$-th neuron, this readout selects a feature vector $v_i \in \mathbb{R}^C$ from a certain position $p_i \in \mathbb{R}^2$ in the last layer’s feature map $m \in \mathbb{R}^{C \times H \times W}$. This position is learned by fitting a bivariate Gaussian distribution $N(\mu_i, \sigma_i)$ over the feature map. During training, the position $p_i$ is sampled from the Gaussian distribution. As the estimate of $\mu_i$ improves, $\sigma_i$ shrinks. During the evaluation, $\mu_i$ is used as $p_i$ since it is the estimate of the most relevant neuron’s feature vector position. Finally, a linear combination of neuron’s learned weights and the feature vector from $p_i$ is computed to obtain the neural response, followed by a nonlinear function, in Lurz’s case, ELU + 1.
+
+In our work, an extension of this Gaussian readout will be used. A deeper description of our readout can be found in the Methodology chapter (\ref{methodology}).
+
+\section{Rotation-Equivariant CNNs}
+
+As mentioned in the previous chapter, Weiler and his colleagues developed a rotation-equivariant CNN, where filters are represented as a steerable basis of two-dimensional functions, enabling the reCNNs to use an arbitrary number of orientations \citep{weiler2018learning}. The first to harness reCNN with such property on neural data were Ecker et al. \citep{ecker2018rotation}. However, in comparison to Weiler’s implementation, instead of circular harmonics as the steerable basis, Ecker uses two-dimensional Hermite functions of rank up to k, given the filter is of size k (overall $k(k+1)/2$ basis functions).
+
+Ecker’s study builds upon the idea presented by Klind et al. \citep{klindt2017neural}. He and his colleagues expanded the shared feature space of all recorded neurons to be independent of the orientation preference. They used reCNNs to extract every feature at a set number of different orientations. Not only does this core take into account retinotopy and, to some degree, a cell type, but it also uses orientation selectivity. In our work, we will use the same implementation of the rotation-equivariant core and slightly adjust it.
+
+
