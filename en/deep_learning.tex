@@ -165,7 +165,7 @@ Common activation functions used in artificial neural networks are the following
 	\text{AdaptiveELU}(x) = \text{ELU}(x - x_{shift}) + y_{shift}
 	\end{equation}
 	\item \textbf{Softplus}: This activation function can be interpreted as a smooth ReLU.
-	\begin{equation}
+	\begin{equation}\label{softplus_equation}
 	\text{Softplus} (x) = \log(1 + \exp(x))
 	\end{equation}
 \end{enumerate}
@@ -222,7 +222,7 @@ Besides $L_1$ and $L_2$ regularizations described in a general section about reg
 
 Despite the network composed of fully connected layers being a universal approximator, when applied to an image input, it has many parameters due to the vast number of pixels. In order to decrease the dimensionality of the parameter space and take advantage of the spatial or temporal properties of the data, a new architecture has been developed; a convolutional neural network (CNN).
 
-This sequential architecture consists of stacked convolutional layers. Each layer has a three-dimensional input of dimensions $(H, W, C)$, where $H$ and $W$ stand for the input’s height and width, and $C$ stands for the number of channels. For example, a grayscale image has just one channel, and an RGB image has channels for red, green, and blue colors; hence $C = 3$. An RGB picture with a resolution of $1080 \times 1920$ would be of size $1080 \times 1920 \times 3$. In the forward pass of the input through the network, the dimensions of the features can change in every layer. 
+This sequential architecture consists of stacked convolutional layers. Each layer has a three-dimensional input of dimensions $(H \times W \times C)$, where $H$ and $W$ stand for the input’s height and width, and $C$ stands for the number of channels. For example, a grayscale image has just one channel, and an RGB image has channels for red, green, and blue colors; hence $C = 3$. An RGB picture with a resolution of $1080 \times 1920$ would be of size $1080 \times 1920 \times 3$. In the forward pass of the input through the network, the dimensions of the features can change in every layer. 
 
 The most prominent characteristic of the CNNs for visual input that distinguish them from other types of networks is their use of spatial properties. The prime focus is on the interactions of pixels in a local neighborhood, as their properties correlate more significantly than the properties of distant pixels. Trainable convolutional filters called kernels are thus used to capture relationships in rather small areas. They perform a linear operation called convolution.
 
@@ -278,7 +278,7 @@ This way, we have obtained a so-called structured feature map; features structur
 
 Obviously, only four orientations of a square filter are achievable without interpolation artifacts. However, as we want to have an arbitrary number of orientations, this approach is insufficient. For this reason, a steerable basis of two-dimensional functions is employed as a filter representation. In this technique, which was proposed by Weiler et al. \citep{weiler2018learning}, the filter learns weights for the basis functions. As the basis is steerable, we can rotate the filter into any required orientation without interpolation artifacts.
 
-\section{Evaluation metrics}
+\section{Evaluation metrics}\label{metrics_section}
 
 Although Poisson loss is suitable for the DNN training, as it depends on the scale and shift of the neural responses, it is not an ideal evaluation metric \citep{willeke2022sensorium}. This might complicate the comparison of the final models trained on different datasets. Moreover, being the Poisson loss not bounded, this measure is not well interpretable.
 

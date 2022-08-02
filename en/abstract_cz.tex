@@ -1,0 +1,27 @@
+
+%%% A template for a simple PDF/A file like a stand-alone abstract of the thesis.
+
+\documentclass[12pt]{report}
+
+\usepackage[a4paper, hmargin=1in, vmargin=1in]{geometry}
+\usepackage[a-2u]{pdfx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+
+\begin{document}
+
+
+Sousední neurony v primární zrakové kůře (V1), první kortikální oblasti zpracovávající vizuální informace, jsou selektivní vůči podnětům prezentovaným v sousedních polohách zorného pole se specifickou hranovou orientací. Tvoří tak tzv. retinotopické a orientační mapy V1. Vzhledem k absenci zařízení pro kortikální stimulaci s vysokým rozlišením zatím obnovení zraku pomocí protetických implantátů ve V1 nevyužilo výhody orientačních map. Brzy však lze očekávat dostupnost kortikálních implantátů s dostatečně vysokým rozlišením stimulace, aby bylo možné zacílit na samostatné orientační sloupce.
+
+Vzhledem k tomu, že v kortexu jsou zakódovány i jiné stimulační prvky, jako je barva, velikost nebo fáze, ale nelze je spolehlivě zapojit ani stimulací s vysokým rozlišením, klademe si v této práci otázku, jak dobře lze vizuální stimuly zakódovat ve V1 pokud je známa pouze orientace a preference polohy. K vyřešení této otázky navrhujeme hlubokou neuronovou síť (DNN) poskytující deskriptor nervové aktivity pro jakoukoli cílovou kortikální pozici a danou orientační preferenci. Toho je dosaženo použitím rotačně-ekvivariantní konvoluční neuronové sítě (reCNN) s poslední vrstvou, která má pouze jeden kanál pro každou orientaci, vracející požadovaný trojrozměrný tenzor hodnot. Specializovaný výstup odhaduje polohy neuronů a jejich preferenci orientace a používá je k získání jedné hodnoty pro daný neuron z poslední vrstvy jádra, ze které se předpovídá neurální aktivita. Tyto skalární hodnoty mohou sloužit jako vstup pro budoucí stimulační protokol.
+
+Navrhovaná síť byla trénována jak na experimentálním, tak na syntetickém datasetu. Syntetický dataset vytvořený Antolíkem a jeho kolegy pomocí modelu kočičí V1 poskytuje informace o umístění neuronů spolu s jejich preferovanou orientací. To bylo použito k výzkumu přesnosti modelu DNN v predikci neurální odezvy a kortikální poloze a odhadu preferované orientace.
+
+Tato práce navrhuje model DNN poskytující korelační zlomek 0,8327 vzhledem ke kontrolnímu modelu. Navíc, jelikož navrhovaný model reCNN dosáhl dostatečné přesnosti, byli jsme schopni rekonstruovat orientační mapy in-silico. Tento slibný výsledek naznačuje, že zacílení kortikálních sloupců neuronů odpovídajících orientaci a preferenci polohy by mohlo zlepšit kódování informací prostřednictvím protetické stimulace.
+
+
+\end{document}
+
+

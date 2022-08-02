@@ -1,6 +1,6 @@
 \chapter{Methodology}\label{methodology}
 
-In this chapter, we provide a description of the implementation, the employed external software libraries, computational resources, and an environment setup. We outline the datasets, network architecture, training process, and hyperparameter search. A repository containing the source code of our solution along with a Docker container for the training environment are publically available online\footnote{\url{https://github.com/mpicek/reCNN_visual_prosthesis}} \footnote{\url{https://github.com/mpicek/csng_dl_docker_image}}.
+In this chapter, we provide a description of the implementation, the employed external software libraries, computational resources, and an environment setup. We outline the datasets, network architecture, training process, and hyperparameter search. A repository containing the source code of our solution along with a Docker container for the training environment are publically available online\footnote{In the attachment \ref{github_main} or online at \url{https://github.com/mpicek/reCNN_visual_prosthesis}} \footnote{In the attachment \ref{docker_image} or online at \url{https://github.com/mpicek/csng_dl_docker_image}}.
 
 \section{Used Software Libraries}
 
@@ -22,7 +22,7 @@ As the computational model of the striate cortex can give us virtually unlimited
 
 The first dataset is a publicly available subset of data from Konstantin-Klemens Lurz and his colleagues' publication \citep{lurz2021generalization}, which we obtained with the authors' consent. The following text will be a paraphrased description of the data. For further details, we refer to the original publication.
 
-The dataset is composed of pairs of visual stimuli and neural population responses. The visual stimuli are cropped grayscale images sampled from ImageNet \citep{deng2009imagenet}, which were upsampled to the resolution of $1080 \times 1920$ and presented at a distance of 15\,cm from the mouse’s head. This dataset contains the images in a resolution of 64x36px as they were isotropically downsampled, corresponding to a resolution of 0.53\,pixels per degree of visual angle. Although the original data have records from multiple mice, public access is restricted to records from just one subject, whose overall 5335 neurons were recorded from the striate cortex, in particular from layer L2/3. For this purpose, a wide field two-photon microscope \citep{sofroniew2016large} was used along with a genetically encoded calcium indicator GCaMP6s in the recorded mouse. The cells were selected based on a classifier for somata \citep{pnevmatikakis2016simultaneous}. The reported value corresponding to neural activity is an averaged cell’s activity in a certain time window. Data preprocessing and stimulation paradigm were adapted from \citep{walker2019inception}.
+The dataset is composed of pairs of visual stimuli and neural population responses. The visual stimuli are cropped grayscale images sampled from ImageNet \citep{deng2009imagenet}, which were upsampled to the resolution of $1080 \times 1920$ and presented at a distance of 15\,cm from the mouse’s head. This dataset contains the images in a resolution of $64 \times 36$px as they were isotropically downsampled, corresponding to a resolution of 0.53\,pixels per degree of visual angle. Although the original data have records from multiple mice, public access is restricted to records from just one subject, whose overall 5335 neurons were recorded from the striate cortex, in particular from layer L2/3. For this purpose, a wide field two-photon microscope \citep{sofroniew2016large} was used along with a genetically encoded calcium indicator GCaMP6s in the recorded mouse. The cells were selected based on a classifier for somata \citep{pnevmatikakis2016simultaneous}. The reported value corresponding to neural activity is an averaged cell’s activity in a certain time window. Data preprocessing and stimulation paradigm were adapted from \citep{walker2019inception}.
 
 The dataset is divided into three subsets. The training set contains 4472 stimulus-response pairs and the validation set 522 pairs. To evaluate our model by measuring the correlation of averaged trials, the test set includes 990 stimulus-response pairs, of which only 99 stimuli were unique, each repeated ten times.
 
@@ -74,13 +74,13 @@ The proposed DNN architecture behaving as the hypothesis $f$ trained on the mous
 
 \begin{figure}[H]\centering
 	\includegraphics[width=145mm]{../img/architecture.png}
-	\caption{A depiction of the proposed DNN architecture for Lurz et al. dataset \citep{lurz2021generalization}. An input image of resolution $64 \times 32$\,px is passed into a reCNN core with 4 layers equivariant to 4 rotations. The first three layers use 3 channels, which are reduced into a single channel in the bottleneck. Each color denotes a different orientation. The readout simultaneously learns the positions and orientations of all neurons, mapping them to positive real values corresponding to the neural responses. The numbers of layers, orientations and channels are chosen for the sake of clarity, not predictive performance. The optimal hyperparameters are described in section \ref{TODO}.}
+	\caption{A depiction of the proposed DNN architecture for Lurz et al. dataset \citep{lurz2021generalization}. An input image of resolution $64 \times 32$\,px is passed into a reCNN core with 4 layers equivariant to 4 rotations. The first three layers use 3 channels, which are reduced into a single channel in the bottleneck. Each color denotes a different orientation. The readout simultaneously learns the positions and orientations of all neurons, mapping them to positive real values corresponding to the neural responses. The numbers of layers, orientations and channels are chosen for the sake of clarity, not predictive performance. The optimal hyperparameters are described in Section \ref{best_lurz_section}.}
 	\label{img_architecture}
 \end{figure}
 
 \section{Core: A rotation-equivariant CNN with a Bottleneck}
 
-We implemented the above-described core and called it a \emph{reCNN bottleneck} as the last layer has a single channel for every rotation. Our approach consisted of adding a reCNN layer with one channel at the end of the core. Unfortunately, the Neuralpredictors library does not provide cores with a different number of channels in every layer, so the implementation was not straightforward. Firstly, we examined the implementation provided by Sinz lab (TODO link), and with this knowledge, we appended the last layer.
+We implemented the above-described core and called it a \emph{reCNN bottleneck} as the last layer has a single channel for every rotation. Our approach consisted of adding a reCNN layer with one channel at the end of the core. Unfortunately, the Neuralpredictors library does not provide cores with a different number of channels in every layer, so the implementation was not straightforward. Firstly, we examined the implementation provided by Sinz lab, and with this knowledge, we appended the last layer.
 
 As a nonlinear activation function, we use ELU. After each convolutional layer, a batch normalization layer follows. Input features are padded with zeros to maintain the same feature map size during the forward pass throughout the whole network.
 
@@ -125,6 +125,98 @@ To impose periodicity on interval $[-1, 1]$, the position in the orientation dim
 \begin{equation}
 o_{periodic} = ((o_{position} + 1) \text{ mod } 2) - 1
 \end{equation}
+
+
+This shifted the interval to $[0, 2]$, the modulo operation moved the position into the interval, and then we shifted the interval back to $[-1, 1]$. Concerning the first two dimensions, the positions to read the features from are clamped into the interval $[-1, 1]$. This is because retinotopy does not behave periodically; therefore, cyclicity is inappropriate in learning a neuron's position of its receptive field.
+
+Although the above modification of the three-dimensional Gaussian readout samples values from features mapped to the interval $[-1, 1]$, it is not periodic yet. The orientation of value mapped to 1 does not correspond to the orientation of value in the feature map mapped to value $-1$. The first value corresponds to an orientation of 0\,degrees, and the last corresponds to $360\,(O - 1)/O $ degrees, where $O$ stands for the number of rotations. If we wanted to acquire value for orientation r such that $360\,(O - 1)/O < r < 360 = 0$ degrees, the readout would not be able to interpolate between $360\,(O - 1)/O$ and $360 = 0$ degrees. For example, if we had four possible orientations, the third dimension of the last reCNN core’s layer would have a size of 4, and the following degrees would be mapped to the values from $[-1, 1]$:
+
+
+
+\begin{table}[H]\centering
+	\begin{tabular}{ | c | c | } 
+		\hline
+		Value & Degree \\
+		\hline
+		-1 & 0 \\
+		-$0.\overline{3}$ & 90 \\
+		$0.\overline{3}$ & 180 \\
+		1 & 270 \\ 
+		\hline
+	\end{tabular}
+	\caption{Table of values and their corresponding degrees.}\label{tab001}
+\end{table}
+
+
+We copied all values from the feature map corresponding to an orientation of 0 degrees after the last layer to fix this issue. Consequently, the readout can properly fetch values from the core’s features employing bilinear interpolation even for values r such that $360\,(O - 1)/O< r < 360 = 0$ degrees. Sticking to numbers from above, we obtain this mapping of the interval $[-1, 1]$ to the orientation degrees:
+
+
+\begin{table}[H]\centering
+	\begin{tabular}{ | c | c | } 
+		\hline
+		Value & Degree \\
+		\hline
+		-1 & 0 \\
+		
+		-$0.5$ & 90 \\
+		$0$ & 180 \\
+		$0.5$ & 270 \\
+		
+		1 & 360 \\ 
+		\hline
+	\end{tabular}
+	\caption{Fixed mapping of values to the corresponding degrees.}\label{tab002}
+\end{table}
+
+
+The interpolated value acquired by the readout is multiplied by a learned factor and shifted by a bias, which is initialized to a mean response of a particular neuron. Consequently, the value is passed into a Softplus activation function described in the chapter about feed-forward DNNs (Equation~\ref{softplus_equation}), yielding the final neuron’s response prediction. Since the readout is restricted to using just one position from the bottleneck, no regularization is imposed on the readout layer.
+
+
+\section{Training Pipeline}
+
+The process of finding the best model does not consist solely of a gradient-based algorithm for finding optimal model weights. In this section, we describe our training pipeline, including packaging the model, setting it up on remote servers, hyperparameter search, model training, and eventually evaluating and reusing the final trained model.
+
+\subsection{Environment and Computational Resources}
+
+To train the network, proper hardware with sufficient computational power is required. It is usually beneficial to containerize the solution into a software package that can be easily scaled and run on multiple machines.
+
+We opted for Docker, a tool providing such containerization \citep{merkel2014docker}. We built a Docker image based on available Nvidia NGC containers\footnote{\url{https://catalog.ngc.nvidia.com/}} with installed PyTorch library and support for CUDA GPUs \citep{cuda} with other additional libraries, for instance, Neuralpredictors.
+
+Due to a large number of parameters, the DNN’s training is computationally demanding. In our work, we harnessed resources provided by MetaCentrum\footnote{\url{https://www.metacentrum.cz/en/index.html}}. Because remote virtual machines obtained from a scheduling system on MetaCentrum use Singularity \citep{kurtzer2017singularity} instead of Docker, our Docker image had to be converted into an image compatible with Singularity. Fortunately, Singularity is prepared for this situation and made this conversion straightforward. Additionally, we developed multiple scripts simplifying the model’s deployment on the MetaCentrum infrastructure. 
+
+\subsection{Hyperparameter Search}
+
+In deep learning, finding the optimal hyperparameters is a crucial problem. The model’s author can either strictly set the hyperparameters according to previous experience, or some other algorithm is employed to search in a hyperparameter space, trying different solutions and using the best performing one on the validation set. During the hyperparameter search, it is favorable to track the experiments and model versions, visualize the results and later reproduce the models.
+
+
+For these purposes, we utilized a machine learning tool Weights and Biases \citep{biewald2020experiment}, providing all the features mentioned above, which came in handy during the development. As regards the hyperparameter search, it can be done in multiple distinct ways. The most commonly used search techniques, which are also supported by Weights and Biases, are the following:
+\begin{enumerate}
+	\item Choose hyperparameter values randomly (random search).
+	\item Given a finite hyperparameter space, try all possible hyperparameter values (grid search).
+	\item Search for the optimal hyperparameters in a Bayesian fashion \citep{snoek2012practical}.
+	
+\end{enumerate}
+
+We preferred the first and the last technique. The second option is not feasible in our case due to the infinite number of parameters to be set. Even discretizing the space of values that hyperparameters can take, due to the high dimensionality of it, covering it extensively is computationally unfeasible. 
+At the beginning of our hyperparameter search, we employed a random search to get a gist of how the hyperparameter space behaves and weed out hyperparameters that do not yield a capable model.
+
+Based on these empirical results, we narrowed the possible ranges of hyperparameter values to choose from, obtaining a smaller hyperparameter subspace. Consequently, we harnessed the Bayesian search to deliberately select the best hyperparameters. This technique prefers with some probability to select hyperparameters proven to perform well on the validation dataset based on the previous trials.
+
+Weights and Biases provide a helpful feature for hyperparameter search called Sweeps. After a Sweep is initialized, virtual machines can connect to the Weights and Biases platform to acquire the next set of hyperparameters on which a network should be trained. Metrics, losses, and other valuable information are logged into the platform during training and can be consequently visualized in a web application provided by Weights and Biases.
+
+\subsection{Control Model}
+
+Only reporting the achieved values of the evaluation measures defined in Section~\ref{metrics_section} does not give the reader any gist of how using the bottleneck decreases the predictive performance. To give more context to our achieved performance, we developed and trained a model proposed in the paper from Lurz et al. \citep{lurz2021generalization}, mainly because they aim to create a core that generalizes well between different animals, making a perfect architecture for this comparison. In contrast with our model, Lurz and colleagues want to achieve the highest predictive performance possible with no restrictions. In contrast, our network has its computation strictly constrained by the bottleneck layer at the end of the reCNN core. It is, therefore, expected that our network will have much lower predictive performance. The question is, however, how much the performance drops.
+
+For this reason, we compute the correlation fraction with respect to the control model. Specifically, this metric is obtained as the fraction of the correlation achieved by the bottleneck model over the correlation of the control model predictions. As regards the correlation used, we correlate each model’s predictions with the averaged response of the repeated trials. This result gives more information about the decrease in accuracy due to the bottleneck's presence and a readout that uses just a scalar value for a neuron’s response prediction.
+
+This evaluation technique has, however, also an important drawback that needs to be taken into account. The control model’s quality influences the reported fraction of achieved performance. The worse the control model is, the better our bottleneck model seems to be. 
+
+
+
+
+
+
 
 
 
